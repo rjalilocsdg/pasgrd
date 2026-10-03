@@ -2,9 +2,11 @@
 FROM pasarguard/node:latest AS node
 
 FROM pasarguard/panel:latest AS python-seal
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential python3-dev \
+ && python -m pip install --no-cache-dir Cython==3.1.8 setuptools==80.10.2 wheel==0.48.0
 COPY bootstrap.py genpaths.py /protected/
-COPY tools/seal_python.py /tmp/seal_python.py
-RUN python /tmp/seal_python.py /protected/bootstrap.py /protected/genpaths.py
+COPY tools/build_native.py /tmp/build_native.py
+RUN python /tmp/build_native.py /protected/bootstrap.py /protected/genpaths.py
 
 FROM pasarguard/panel:latest
 
@@ -20,8 +22,7 @@ COPY nginx.conf.template /etc/nginx/nginx.conf.template
 COPY ws.inc /etc/nginx/ws.inc
 COPY jinx-ui.js /etc/nginx/jinx-ui.js
 COPY entrypoint.sh /entrypoint.sh
-COPY --from=python-seal /protected/bootstrap.py /code/bootstrap.py
-COPY --from=python-seal /protected/genpaths.py /code/genpaths.py
+COPY --from=python-seal /protected/runtime/ /code/
 COPY sub.html /code/custom_templates/subscription/index.html
 COPY sub.html /etc/jinx/sub.html
 COPY healthcheck.sh /usr/local/bin/jinx-healthcheck
