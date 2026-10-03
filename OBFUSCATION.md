@@ -1,43 +1,73 @@
 # Obfuscated distribution
 
 Based on rjalilocsdg/pasgrd. Super JinX branding, credits, and LICENSE remain applicable.
+Deploy using the Dockerfile and existing Railway settings.
 
-Deploy with the existing Dockerfile and Railway settings. Environment variables,
-URLs, persistent paths, and subscription template data retain their original meanings.
+## Protection applied
 
-The dashboard and three executable subscription scripts use javascript-obfuscator
-4.1.1 with RC4 string arrays, hexadecimal identifiers, control flow flattening,
-dead code injection, split strings, and numeric expressions. Global names and
-object properties are preserved because subscription scripts share functions and
-interact with browser APIs. No source maps are shipped. HTML, CSS, and Jinja markup
-retain their original structure. JavaScript is substantially larger and can take
-more CPU to initialize; assess it on the devices used by customers.
+Python inputs have local and global bindings renamed before packing. Ordinary
+string literals of three or more characters are masked and decoded through a
+cached helper. F-string segments, import paths, external method names, and protocol
+contracts retain required meanings. Four embedded database scripts receive the
+same transformations. Packing remains reversible and does not provide encryption.
 
-Python files in this repository contain compressed, XOR masked source with portable
-loaders; those repository payloads remain straightforward to decode. During the
-Docker build, Cython 3.1.8 compiles their payloads into native extensions using the
-panel image's interpreter. Four database subprocess scripts are compiled into
-separate native modules, and their source strings are replaced with imports.
-The final image copies only native modules and small launchers. Generated C files,
-decoded Python source, compiler tools, and packed input files remain in the build
-stage. Linux extensions have debugging symbols stripped. Native code raises the
-effort required to recover control flow compared with the previous marshalled
-bytecode loader; constants and runtime behavior remain inspectable. Rebuild for
-each target Python version and architecture.
+A separate Docker stage uses Cython 3.1.8 to compile six native modules, including
+those database helpers. The final image receives compiled modules and minimal
+launchers. Generated C, decoded source, packed inputs, and compiler tools stay in
+the build stage. Linux debugging symbols are stripped. Rebuild for each Python
+version and architecture. Strings, native control flow, and runtime behavior can
+still be examined.
 
-Shell scripts contain compressed payloads launched by Python and executed by Bash.
-The payloads are byte for byte identical to the upstream scripts. Nginx configuration
-has comments and unnecessary whitespace removed while retaining required syntax.
+Shell scripts in the checkout contain compressed payloads. The Docker builder
+converts them into native launchers containing masked Bash payloads. The final
+image receives those executables rather than Python shell decoders. The launchers
+preserve Bash arguments and exit status. Bash receives readable commands at runtime;
+this does not prevent a person controlling the container from extracting them.
 
-Obfuscation is reversible. It is not encryption, access control, or secret storage.
-The public upstream source remains available. Existing Git history in the working
-checkout also contains the originals; the supplied ZIP excludes that history.
-Keep an original source copy for maintenance and regenerate from source when updating.
-Upstream PasarGuard and Xray binaries and libraries are supplied by their base images.
+The QR encoder and subscription application share one private scope. Their
+shared QR implementation is no longer exposed on window. Dashboard and subscription
+code use javascript-obfuscator 4.1.1 with renamed bindings, masked string arrays,
+control flow flattening, split strings, numeric expressions, and injected code.
+No source maps are emitted. Object properties used by browser and server APIs
+remain compatible. The output remains recognizable as obfuscated JavaScript.
 
-The previous checks covered packed source equivalence, path generation, browser
-syntax, template preservation, shell payload equality, and Git whitespace. The
-native revision passed compilation of six modules on macOS/Python 3.11, native
-path generation for fresh/legacy/repeated runs, bootstrap settings comparison,
-rate limiting comparison, and compiled helper routing checks. Full Linux Docker,
-live database helper execution, and browser integration were not checked.
+The generated JavaScript is larger and more expensive to initialize. HTML, CSS,
+user-visible branding, and server-rendered subscription data remain readable.
+Upstream PasarGuard and Xray binaries come from the existing base images.
+
+## Source exposure
+
+The public repository's history exposes the original implementation. Earlier
+copies, forks, and downloads cannot be revoked by subsequent transformations.
+The repository's packed files can also be decoded and inspected. Native compilation
+improves the distributed image's resistance to casual extraction; it cannot make
+public source confidential. The ZIP distribution excludes Git history.
+
+## Regeneration
+
+Use original files in a separate source directory; never obfuscate generated output
+again. Keep source and deployed configuration backups for maintenance.
+
+Install tools/requirements.txt in an isolated Python environment and install the
+Node dependencies in tools/package.json. Run:
+
+```sh
+python tools/pack_python.py ORIGINAL_DIRECTORY OUTPUT_DIRECTORY
+node tools/obfuscate_web.cjs ORIGINAL_DIRECTORY OUTPUT_DIRECTORY
+```
+
+The Dockerfile runs tools/build_native.py in the panel image's build stage.
+
+## Checks
+
+Six native modules and two launchers compiled on macOS with Python 3.11. Fresh,
+legacy, and repeated path generation passed. Bootstrap configuration and rate
+limiting matched original behavior. Native helper import routing was checked.
+The native health launcher matched the original's success and failure status in
+five mocked cases.
+
+A jsdom harness compared subscription rendering, language switching, QR drawing
+pixels, and dialog behavior for five subscription statuses in English and Persian.
+Dashboard initialization and JavaScript syntax passed. These checks do not replace
+real browser performance checks. Full Linux Docker deployment, live database helper
+execution, and complete service startup remain unverified.
