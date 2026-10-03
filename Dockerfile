@@ -1,6 +1,11 @@
 # Super JinX Panel: PasarGuard + Xray core + nginx in one Railway service (port 8080)
 FROM pasarguard/node:latest AS node
 
+FROM pasarguard/panel:latest AS python-seal
+COPY bootstrap.py genpaths.py /protected/
+COPY tools/seal_python.py /tmp/seal_python.py
+RUN python /tmp/seal_python.py /protected/bootstrap.py /protected/genpaths.py
+
 FROM pasarguard/panel:latest
 
 RUN apt-get update && apt-get install -y --no-install-recommends nginx openssl ca-certificates curl \
@@ -15,8 +20,8 @@ COPY nginx.conf.template /etc/nginx/nginx.conf.template
 COPY ws.inc /etc/nginx/ws.inc
 COPY jinx-ui.js /etc/nginx/jinx-ui.js
 COPY entrypoint.sh /entrypoint.sh
-COPY bootstrap.py /code/bootstrap.py
-COPY genpaths.py /code/genpaths.py
+COPY --from=python-seal /protected/bootstrap.py /code/bootstrap.py
+COPY --from=python-seal /protected/genpaths.py /code/genpaths.py
 COPY sub.html /code/custom_templates/subscription/index.html
 COPY sub.html /etc/jinx/sub.html
 COPY healthcheck.sh /usr/local/bin/jinx-healthcheck
